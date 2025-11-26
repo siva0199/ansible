@@ -1,0 +1,1056 @@
+---
+
+- name: ansible file
+  hosts: all
+  become: yes
+
+  tasks: 
+    - name: install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: start service
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+
+---
+
+- name: ansibel file
+  hosts: all
+  become: yes
+
+  tasks: 
+    - name: install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: start service
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: restarted nginx
+      service:
+        name: nginx
+        state: restarted
+
+
+---
+
+- name: configure nginx using role
+  hosts: webserver
+  become: yes
+  roles:
+    - nginx
+
+
+ansible-galaxy init nginx
+this one create roles/nginx/
+roles/nginx/tasks/main.yml
+
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+  become: yes
+
+- name: Start nginx
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+
+
+
+ansible/
+├── playbooks/
+│   └── site.yml
+├── roles/
+│   ├── nginx/
+│   ├── docker/
+│   ├── users/
+│   ├── app/
+│   └── monitoring/
+├── inventory/
+│   ├── dev
+│   └── prod
+└── group_vars/
+    ├── dev
+    └── prod
+
+- hosts: webservers
+  roles:
+    - nginx
+    - docker
+    - app
+
+[webservers]
+10.0.2.11
+10.0.2.12
+
+[dbservers]
+10.0.3.21
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+
+webservers group has 2 servers
+
+dbservers has 1 server
+
+ansible_user and key file apply to all servers
+-----------------------------------------------------------------
+nano ping-test.yml
+
+---
+
+- name: Ping some server
+  hosts: webservers
+  gather_facts: no
+
+  tasks: 
+    - name: ping nodes
+      ping:
+
+  
+ansible-playbook -i inventory.ini ping-test.yml
+
+
+Run Task on DB Only
+
+nano uptime.yml
+
+- name: get uptime of dbservers
+  hosts: dbservers
+  gather_facts: no
+
+  tasks: 
+    - name: dbservers uptime
+      command: uptime
+
+ansible-playbook -i inventory.ini uptime.yml
+
+ansible <hosts/group> -m <module> -a "<arguments>"
+
+Ping all servers
+ansible all -m ping
+
+ansible webservers -m command -a "uptime"
+ansible all -b -m apt -a "name=nginx state=present"
+ansible app -m copy -a "src=test.txt dest=/tmp/test.txt"
+
+PLAYBOOK EXECUTION COMMANDS
+ansible-playbook -i inventory.ini playbook.yml
+ansible-playbook site.yml
+ansible-playbook -i inventory.ini nginx.yml
+ansible-playbook deploy.yml -vvv
+ansible-playbook play.yml --syntax-check       Check syntax without running
+ansible-playbook play.yml --check     Dry-run (simulate changes)
+
+ANSIBLE CONFIGURATION COMMANDS
+3. ansible-config
+✔ View current config
+ansible-config view
+
+✔ Show active config file
+ansible-config dump --only-changed
+
+✔ List all configuration values
+ansible-config list
+
+4. ANSIBLE INVENTORY COMMANDS
+4. ansible-inventory
+✔ Display inventory hosts
+ansible-inventory -i inventory.ini --list
+
+✔ Graph view
+ansible-inventory --graph
+
+
+Show which host belongs to which group.
+
+✔ Host variables
+ansible-inventory --host web1
+
+ANSIBLE VAULT COMMANDS (SECRET MANAGEMENT)
+5.1 Create encrypted file
+ansible-vault create secrets.yml
+
+5.2 Encrypt an existing file
+ansible-vault encrypt=passwords.yml
+
+5.3 Decrypt
+ansible-vault decrypt secrets.yml
+
+5.4 Edit
+ansible-vault edit secrets.yml
+
+5.5 View
+ansible-vault view secrets.yml
+
+5.6 Encrypt a string
+ansible-vault encrypt_string "MyPassword123"
+
+
+
+🟦 6. ANSIBLE GALAXY COMMANDS (FOR ROLES)
+6. ansible-galaxy
+✔ Create a role
+ansible-galaxy init myrole
+
+✔ Install a role from Ansible Galaxy
+ansible-galaxy install geerlingguy.nginx
+
+✔ Install roles from requirements.yml
+ansible-galaxy install -r requirements.yml
+
+🟦 7. ANSIBLE DOC COMMANDS (VIEW MODULE HELP)
+7. ansible-doc
+✔ View documentation for a module
+ansible-doc apt
+
+✔ List all modules
+ansible-doc -l
+
+🟦 8. ANSIBLE VERSION CHECK
+8. ansible --version
+ansible --version
+
+
+Shows installed version and config files.
+
+🟦 9. USEFUL FLAGS (VERY IMPORTANT)
+✔ Become root (sudo)
+-b
+
+✔ Extra variables (pass values from CLI)
+ansible-playbook deploy.yml -e "version=1.2"
+
+✔ Limit execution to 1 host
+--limit hostname
+
+✔ Verbose output
+-v
+-vv
+-vvv
+
+✔ Check mode (dry run)
+--check
+
+✔ List tasks
+--list-tasks
+
+✔ List hosts affected
+--list-hosts
+
+
+Module         	 Purpose
+
+ping	          Test connection
+command	        Run shell commands
+shell	          Run shell with pipe, redirection
+yum	            Install packages on RHEL
+apt	            Install packages on Ubuntu
+service/systemd	Start/stop/restart services
+copy	          Copy files
+template	      Deploy Jinja2 templates
+file	          Permissions, owners
+git	            Clone repos
+user	          Create users
+cron	          Setup cron jobs
+debug	          Print messages
+setup	          Gather facts
+
+
+✔ Update all servers
+ansible all -b -m apt -a "update_cache=yes upgrade=dist"
+
+✔ Install Nginx
+ansible webservers -b -m apt -a "name=nginx state=present"
+
+✔ Run a playbook on specific host
+ansible-playbook site.yml --limit web1
+
+✔ Check syntax
+ansible-playbook site.yml --syntax-check
+
+✔ Dry run
+ansible-playbook site.yml --check
+
+✔ List all tasks inside playbook
+ansible-playbook site.yml --list-tasks
+
+✔ List hosts affected
+ansible-playbook site.yml --list-hosts
+
+
+| Flag               | Meaning             | When to Use               |
+| ------------------ | ------------------- | ------------------------- |
+| `-i`               | Inventory           | Use custom inventory      |
+| `-m`               | Module              | Ad-hoc commands           |
+| `-a`               | Arguments           | Pass module arguments     |
+| `-b`               | become root         | Install/update services   |
+| `-K`               | sudo password       | If sudo requires password |
+| `-e`               | Variables           | Pass dynamic values       |
+| `-v`, `-vv`        | Debug logs          | Troubleshooting           |
+| `--check`          | Dry run             | Test changes              |
+| `--syntax-check`   | Validate playbook   | Before execution          |
+| `--list-hosts`     | Show affected hosts | Confirmation              |
+| `--list-tasks`     | Show tasks          | Review                    |
+| `--limit`          | Restrict targets    | Single host               |
+| `--tags`           | Run selected tasks  | Partial execution         |
+| `--ask-vault-pass` | Decrypt vault       | Using secrets             |
+| `--start-at-task`  | Start from task     | Resume failed playbook    |
+
+
+🟢 METHOD 1: COPY FILE TO 100 SERVERS (AD-HOC COMMAND)
+
+➡️ Quickest method—no playbook needed.
+
+Run:
+
+ansible all -i inventory.ini -m copy -a "src=/opt/config.txt dest=/tmp/config.txt" -b
+
+✔ Explanation:
+
+ansible all → run on all servers
+
+-i inventory.ini → use our inventory
+
+-m copy → copy module
+
+-a → module arguments
+
+src → local file on master
+
+dest → target path on 100 servers
+
+-b → run as sudo
+
+Output:
+10.0.2.11 | SUCCESS
+10.0.2.12 | SUCCESS
+10.0.2.13 | SUCCESS
+...
+
+
+Create the File You Want to Copy
+
+Example file:
+
+nano /opt/config.txt
+
+
+Add something:
+
+Hello from Ansible
+
+🟢 METHOD 1: COPY FILE TO 100 SERVERS (AD-HOC COMMAND)
+
+➡️ Quickest method—no playbook needed.
+
+Run:
+
+ansible all -i inventory.ini -m copy -a "src=/opt/config.txt dest=/tmp/config.txt" -b
+
+✔ Explanation:
+
+ansible all → run on all servers
+
+-i inventory.ini → use our inventory
+
+-m copy → copy module
+
+-a → module arguments
+
+src → local file on master
+
+dest → target path on 100 servers
+
+-b → run as sudo
+
+Output:
+10.0.2.11 | SUCCESS
+10.0.2.12 | SUCCESS
+10.0.2.13 | SUCCESS
+...
+
+
+All 100 servers will get the file within seconds.
+
+All 100 servers will get the file within seconds.
+
+🟢 METHOD 2: COPY FILE USING A PLAYBOOK
+
+➡️ Useful when your task is part of automation or pipeline.
+
+Create a playbook:
+
+nano copy-file.yml
+
+
+Add:
+
+- name: Copy file to 100 servers
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Copy configuration file
+      copy:
+        src: /opt/config.txt
+        dest: /tmp/config.txt
+        owner: root
+        group: root
+        mode: '0644'
+
+
+Run:
+
+ansible-playbook -i inventory.ini copy-file.yml
+
+
+What is forks in Ansible?
+
+forks = number of servers Ansible can manage at the same time (in parallel).
+
+By default, Ansible uses 5 forks
+
+Temporary (for one command)
+Use -f flag:
+ansible all -m ping -f 20
+-f 20 → run on 20 servers at a time
+
+Permanent (in ansible.cfg)
+Open config:
+
+sudo nano /etc/ansible/ansible.cfg
+
+Find:
+
+# forks = 5
+
+Uncomment and change to something like:
+forks = 50
+✔ Meaning:
+Ansible will now run tasks on 50 servers at once.
+
+
+
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+
+yum:
+  name: httpd
+  state: present
+
+
+dnf:
+  name: docker
+  state: latest
+
+
+package:
+  name: tree
+  state: present
+
+
+service:
+  name: nginx
+  state: started
+  enabled: yes
+
+
+systemd:
+  name: docker
+  state: restarted
+
+
+copy:
+  src: config.txt
+  dest: /etc/myapp/config.txt
+  mode: '0644'
+
+template:
+  src: nginx.conf.j2
+  dest: /etc/nginx/nginx.conf
+
+file:
+  path: /tmp/logs
+  state: directory
+  mode: '0755'
+
+fetch:
+  src: /var/log/syslog
+  dest: logs/
+
+unarchive:
+  src: app.tar.gz
+  dest: /var/www/html
+  remote_src: yes
+
+archive:
+  path: /opt/app
+  dest: /opt/app.zip
+
+command: uptime
+
+shell: "cat /etc/passwd | grep root"
+
+raw: yum install -y python3
+
+user:
+  name: devops
+  state: present
+
+group:
+  name: developers
+  state: present
+
+authorized_key:
+  user: ubuntu
+  key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+
+lineinfile
+Modify one line inside a file.
+lineinfile:
+  path: /etc/sysctl.conf
+  line: "net.ipv4.ip_forward = 1"
+
+replace:
+  path: /etc/myapp/config.txt
+  regexp: "PORT=.*"
+  replace: "PORT=8080"
+
+ufw:
+  rule: allow
+  port: 22
+
+firewalld:
+  service: http
+  permanent: yes
+  state: enabled
+
+iptables:
+  chain: INPUT
+  protocol: tcp
+  destination_port: 80
+  jump: ACCEPT
+
+uri (API calls)
+uri:
+  url: "https://api.github.com"
+  return_content: yes
+
+git:
+  repo: 'https://github.com/myapp.git'
+  dest: /var/www/myapp
+  version: master
+
+svn:
+  repo: svn://svn.repo.com/project
+  dest: /opt/app
+
+ec2:
+  key_name: mykey
+  instance_type: t2.micro
+  image: ami-123
+  count: 1
+
+aws_s3:
+  bucket: mybucket
+  mode: put
+  src: file.txt
+
+rds:
+  command: create
+  instance_name: mydb
+
+ec2_group:
+  name: web-sg
+  description: Web security group
+
+lambda:
+  name: myfunction
+  state: present
+
+docker_image:
+  name: nginx
+  source: pull
+
+docker_container:
+  name: web
+  image: nginx
+  state: started
+  ports:
+    - "80:80"
+
+docker_volume:
+  name: appdata
+  state: present
+
+cron:
+  name: "Backup Job"
+  minute: "0"
+  hour: "1"
+  job: "/usr/bin/backup.sh"
+
+reboot:
+  msg: "Reboot by Ansible"
+
+mail:
+  host: smtp.gmail.com
+  port: 587
+  to: admin@example.com
+  subject: "Deployment status"
+
+
+- name: Real-time Ansible Automation
+  hosts: webservers
+  become: yes
+
+  vars:
+    app_repo: "https://github.com/demo/app.git"
+
+  tasks:
+
+    - name: Install packages
+      apt:
+        name:
+          - nginx
+          - git
+        state: present
+        update_cache: yes
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Copy a static config file
+      copy:
+        src: config.txt
+        dest: /etc/myapp/config.txt
+        mode: '0644'
+
+    - name: Deploy template
+      template:
+        src: index.html.j2
+        dest: /var/www/html/index.html
+
+    - name: Clone application from GitHub
+      git:
+        repo: "{{ app_repo }}"
+        dest: /opt/myapp
+        version: master
+
+    - name: Set directory permissions
+      file:
+        path: /opt/myapp
+        owner: root
+        mode: '0755'
+
+    - name: Restart nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+    - name: Print success message
+      debug:
+        msg: "Deployment completed successfully!"
+
+
+
+
+ansible-project/
+├── inventories/
+│   ├── dev
+│   └── prod
+├── group_vars/
+│   └── all.yml
+├── roles/
+│   ├── common/
+│   │   └── tasks/main.yml
+│   ├── nginx/
+│   │   ├── tasks/main.yml
+│   │   └── templates/nginx.conf.j2
+│   └── app/
+│       ├── tasks/main.yml
+│       └── templates/app.service.j2
+├── playbooks/
+│   ├── site.yml
+│   └── app-only.yml
+└── Jenkinsfile
+
+
+inventories/dev
+[webservers]
+10.0.1.11
+10.0.1.12
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/id_rsa
+env=dev
+
+🔹 inventories/prod
+[webservers]
+10.0.2.11
+10.0.2.12
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/.ssh/prod_rsa
+env=prod
+
+🔹 group_vars/all.yml
+app_name: sample-app
+app_repo: "https://github.com/your-org/sample-app.git"
+app_dir: "/opt/{{ app_name }}"
+app_user: "appuser"
+app_port: 8080
+nginx_listen_port: 80
+
+🔹 Role: common – roles/common/tasks/main.yml
+- name: Ensure base packages are installed
+  apt:
+    name:
+      - git
+      - curl
+      - unzip
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Set timezone to UTC
+  timezone:
+    name: "UTC"
+  become: yes
+
+🔹 Role: nginx – roles/nginx/tasks/main.yml
+- name: Install nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Deploy nginx config
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/{{ app_name }}.conf
+  notify: restart nginx
+  become: yes
+
+- name: Enable site
+  file:
+    src: /etc/nginx/sites-available/{{ app_name }}.conf
+    dest: /etc/nginx/sites-enabled/{{ app_name }}.conf
+    state: link
+  notify: restart nginx
+  become: yes
+
+- name: Disable default site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: restart nginx
+  become: yes
+
+roles/nginx/handlers/main.yml
+- name: restart nginx
+  systemd:
+    name: nginx
+    state: restarted
+    enabled: yes
+  become: yes
+
+roles/nginx/templates/nginx.conf.j2
+server {
+    listen {{ nginx_listen_port }};
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:{{ app_port }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+
+🔹 Role: app – roles/app/tasks/main.yml
+- name: Ensure app user exists
+  user:
+    name: "{{ app_user }}"
+    system: yes
+    shell: /usr/sbin/nologin
+  become: yes
+
+- name: Clone application repo
+  git:
+    repo: "{{ app_repo }}"
+    dest: "{{ app_dir }}"
+    version: "{{ app_branch | default('main') }}"
+    force: yes
+  become: yes
+  become_user: "{{ app_user }}"
+
+- name: Install dependencies (example: Node app)
+  command: npm install
+  args:
+    chdir: "{{ app_dir }}"
+  become: yes
+  become_user: "{{ app_user }}"
+
+- name: Deploy systemd service
+  template:
+    src: app.service.j2
+    dest: /etc/systemd/system/{{ app_name }}.service
+  notify: restart app
+  become: yes
+
+roles/app/handlers/main.yml
+- name: restart app
+  systemd:
+    name: "{{ app_name }}"
+    state: restarted
+    enabled: yes
+  become: yes
+
+roles/app/templates/app.service.j2
+[Unit]
+Description={{ app_name }} service
+After=network.target
+
+[Service]
+User={{ app_user }}
+WorkingDirectory={{ app_dir }}
+ExecStart=/usr/bin/npm start
+Restart=always
+Environment=NODE_ENV={{ env }}
+
+[Install]
+WantedBy=multi-user.target
+
+🔹 Main Playbook – playbooks/site.yml
+- name: Configure full stack (common + app + nginx)
+  hosts: webservers
+  become: yes
+
+  roles:
+    - common
+    - app
+    - nginx
+
+🔹 App-only Playbook – playbooks/app-only.yml
+- name: Deploy app only (no infra changes)
+  hosts: webservers
+  become: yes
+
+  roles:
+    - app
+
+2️⃣ Jenkins + Ansible CI/CD Pipeline
+
+Now we’ll wire this repository to Jenkins.
+
+🔹 Prereqs
+
+On the Jenkins node:
+
+Jenkins installed
+
+ansible installed
+
+SSH keys configured to reach your servers
+
+This repo checked out by Jenkins (via Git)
+
+📄 Jenkinsfile (Declarative Pipeline)
+
+Put this at /Jenkinsfile in repo:
+
+pipeline {
+    agent any
+
+    parameters {
+        choice(name: 'ENV', choices: ['dev', 'prod'], description: 'Target environment')
+        string(name: 'APP_BRANCH', defaultValue: 'main', description: 'Git branch to deploy')
+    }
+
+    environment {
+        ANSIBLE_CONFIG = "${WORKSPACE}/ansible.cfg"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install dependencies (optional)') {
+            when { expression { return false } } // enable if needed
+            steps {
+                sh 'echo "Install tools if needed"'
+            }
+        }
+
+        stage('Ansible Dry Run') {
+            steps {
+                sh """
+                    cd ansible-project
+                    ansible-playbook -i inventories/${ENV} playbooks/site.yml \\
+                        -e app_branch=${APP_BRANCH} \\
+                        --check --diff
+                """
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                input message: "Proceed with deployment to ${params.ENV}?"
+                sh """
+                    cd ansible-project
+                    ansible-playbook -i inventories/${ENV} playbooks/site.yml \\
+                        -e app_branch=${APP_BRANCH}
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Deployment to ${params.ENV} successful."
+        }
+        failure {
+            echo "Deployment FAILED."
+        }
+    }
+}
+
+🔹 How This Pipeline Works
+
+ENV param → chooses inventories/dev or inventories/prod
+
+APP_BRANCH → passed into Ansible as app_branch variable
+
+Dry run stage: uses --check --diff to show changes without applying
+
+Deploy stage: waits for manual approval, then runs real deploy
+
+In real life, you can:
+
+Add Ansible Lint stage
+
+Send Slack notifications
+
+Deploy dev automatically, prod with approval
+
+3️⃣ Advanced Ansible Interview Q&A (4–5 yrs Level)
+
+Here are some strong answers you can use.
+
+
+
+❓ Q1: How do you structure a large Ansible project for multiple environments?
+
+Answer (short but powerful):
+
+“I follow a role-based, environment-aware structure.
+I keep:
+
+roles/ for reusable logic (nginx, app, users, monitoring)
+
+inventories/dev, inventories/prod with separate host groups
+
+group_vars/ and host_vars/ for environment-specific config
+
+playbooks/ for entrypoints like site.yml, app-deploy.yml
+
+This allows me to share the same roles across dev, stage, prod but keep variables and inventory separate. It becomes very clean and scalable for 100+ nodes.”
+
+
+
+❓ Q2: How do you handle secrets in Ansible?
+
+“I use Ansible Vault for any sensitive data like DB credentials, API keys, and certificates.
+I create encrypted files using ansible-vault create or encrypt existing vars using ansible-vault encrypt.
+In playbooks I load them via vars_files or include_vars.
+
+During execution, Jenkins passes the vault password via --vault-password-file (stored securely in Jenkins credentials), so secrets are never in plain text or logs.
+This keeps Git repo safe and deployment automated.”
+
+
+
+❓ Q3: How do you ensure idempotency in Ansible?
+
+“Idempotency means running the same playbook multiple times should not break the system and should only change when needed.
+
+I use Ansible modules like apt, file, template, user, which are idempotent by design.
+For shell/command tasks, I add conditions (creates, removes, when) so they don’t re-run unnecessarily.
+I also check changed status and handlers — for example templates only trigger service restart when config actually changes.
+
+I frequently use --check mode and --diff to verify that my changes are minimal and predictable.”
+
+
+
+❓ Q4: What are some performance tuning techniques in Ansible?
+
+“For large-scale environments I tune:
+
+forks in ansible.cfg (e.g., 50 or 100) to increase parallelism
+
+Use strategy: free when I don’t want slow hosts to block others
+
+Limit fact gathering with gather_facts: false when not needed
+
+Use delegate_to and run_once for tasks that don’t need to run on all hosts
+
+I also split big playbooks into roles and run only specific tags if needed (e.g., --tags app for app-only deployment).”
+
+
+
+❓ Q5: How would you do zero-downtime deployment with Ansible?
+
+“I usually adopt a rolling deployment pattern:
+
+Use inventory groups like webservers and further group them into blue and green or batches
+
+Use serial in playbook, e.g., serial: 1 or serial: 20%
+
+Ansible updates and restarts app on one subset of servers at a time
+
+Health checks are performed via uri or custom scripts
+
+This ensures that only a portion of nodes are affected, and traffic can still be served by the remaining healthy nodes (behind a load balancer).”
+
+
+
+❓ Q6: How do you integrate Ansible with Jenkins for CI/CD?
+
+“I store Ansible code in Git. Jenkins pipeline:
+
+Checks out the repo
+
+Optionally runs tests or ansible-lint
+
+Runs a --check dry run for visibility
+
+Executes ansible-playbook with inventory and extra vars like branch, version, or environment
+
+Uses credentials binding for SSH keys and vault password
+
+Notifies Slack/email on success/failure
+
+This gives us automated, repeatable deployments triggered on Git commits or tags.”
